@@ -68,11 +68,16 @@ if __name__ == '__main__':
                        transform=transform)
     dataset2 = datasets.MNIST('../data', train=False,
                        transform=transform)
+
     train_loader = torch.utils.data.DataLoader(dataset1,**train_kwargs)
     test_loader = torch.utils.data.DataLoader(dataset2, **test_kwargs)
 
+
     loss_original = []
     loss_parabol = []
+
+    accuracy_original = []
+    accuracy_parabol = []
 
     ### Train and test the original model
     model_original = NetOriginal().to(device)
@@ -80,17 +85,22 @@ if __name__ == '__main__':
 
     for epoch in range(1, args.epochs + 1):
         train_original(args, model_original, device, train_loader, optimizer_original, epoch)
-        test_loss = test_original(model_original, device, test_loader)
+        test_loss, test_accuracy = test_original(model_original, device, test_loader)
+
         loss_original.append(test_loss)
+        accuracy_original.append(test_accuracy)
 
     ### Train and test the parabolic optimization model
     torch.manual_seed(args.seed)
     model_parabal = NetParabal().to(device)
     for epoch in range(1, args.epochs + 1):
         train_parabal(args, model_parabal, device, train_loader, epoch)
-        test_loss = test_parabal(model_parabal, device, test_loader)
+        test_loss, test_accuracy = test_parabal(model_parabal, device, test_loader)
         loss_parabol.append(test_loss)
+        accuracy_parabol.append(test_accuracy)
 
+
+    plt.figure(figsize=(12, 5))
     plt.plot(range(1, args.epochs + 1), loss_original, label='SGD')
     plt.plot(range(1, args.epochs + 1), loss_parabol, label='Parabolic Optimization')
     plt.xlabel('Epoch')
@@ -98,3 +108,13 @@ if __name__ == '__main__':
     plt.title('Test Loss Comparison')
     plt.legend()
     plt.savefig('loss_comparison.png')
+
+    plt.figure(figsize=(12, 5))
+    plt.plot(range(1, args.epochs + 1), accuracy_original, label='SGD')
+    plt.plot(range(1, args.epochs + 1), accuracy_parabol, label='Parabolic Optimization')
+    plt.xlabel('Epoch')
+    plt.ylabel('Test Accuracy (%)')
+    plt.title('Test Accuracy Comparison')
+    plt.legend()
+    plt.savefig('accuracy_comparison.png')
+
